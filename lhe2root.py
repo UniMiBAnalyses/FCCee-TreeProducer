@@ -1,7 +1,6 @@
 # Converts a LHE file into a ROOT file with a structure inspired by the NanoAOD format.
 # Only the branches resembling the LHEPart collection commonly used in NanoAOD datasets.
 
-from MG5_simulation.gridpack.grid_cms_lhc.genproductions_scripts.bin.MadGraph5_aMCatNLO.local.VBSee_100TeV.VBSee_100TeV_gridpack.work.MG5_aMC_v2_9_18.models.MSSM_SLHA2 import particles
 import pylhe
 import sys
 
