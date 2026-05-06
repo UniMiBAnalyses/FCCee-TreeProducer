@@ -11,5 +11,5 @@ This script converts an LHE file into a ROOT file with a structure inspired by N
 ## Usage
 Run the script by providing an input LHE file and a name for output ROOT file:
 ```bash
-python script.py input.lhe output.root
+python3 script.py input.lhe output.root
 ```
