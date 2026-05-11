@@ -4,6 +4,7 @@
 import pylhe
 import sys
 
+import numpy as np
 import awkward as ak
 import uproot
 
@@ -18,7 +19,30 @@ EVENTS = pylhe.read_lhe_with_attributes(LHE_FILE)
 # -------------------------
 # FUNCTIONS
 # -------------------------
+def write_root(output_file, lhepart):
+    with uproot.recreate(output_file) as f:
+        tree = f.mktree("Events", {
+            "LHEPart": lhepart
+        })
+
 def build_TTree_nanoAOD(arr, output_file):
+    lhepart = ak.zip({
+        "eta": ak.values_astype(arr.particles.vector.eta, np.float32),
+        "firstMotherIdx": arr.particles.mother1,  
+        "incomingpz": ak.where(arr.particles.status == -1,
+                               arr.particles.vector.pz, -99),
+        "lastMotherIdx": arr.particles.mother2,
+        "mass": ak.values_astype(arr.particles.vector.M, np.float32),
+        "pdgId": arr.particles.id,
+        "phi": ak.values_astype(arr.particles.vector.phi, np.float32),
+        "pt": ak.values_astype(arr.particles.vector.pt, np.float32),
+        "spin": arr.particles.spin,
+        "status": arr.particles.status,
+    })
+
+    write_root(output_file, lhepart)
+
+def build_TTree_nanoAOD_reweighted(arr, output_file):
     lhepart = ak.zip({
         "eta": arr.particles.vector.eta,
         "firstMotherIdx": arr.particles.mother1,
@@ -32,11 +56,11 @@ def build_TTree_nanoAOD(arr, output_file):
         "spin": arr.particles.spin,
         "status": arr.particles.status,
     })
+    weight = ak.zip({
+        "weights": arr.weights.values,
+    })
 
-    with uproot.recreate(output_file) as f:
-        tree = f.mktree("Events", {
-            "LHEPart": lhepart
-        })
+    write_root(output_file, {"LHEPart": lhepart, "Weight": weight})
 
 # -------------------------
 # MAIN
@@ -49,6 +73,10 @@ def main():
     # --------------------------
     # arr is an array where each entry corresponds to an event (each entry will be an array of arrays containing general info about the event, list of particles etc.)
     arr = pylhe.to_awkward(EVENTS)
+    print("arr fields:",ak.fields(arr))
+    print("arr.eventinfo fields:",ak.fields(arr.eventinfo))
+    print("arr.particles fields:",ak.fields(arr.particles))
+    print("arr.eventinfo.weight fields:",(arr.eventinfo.weight))
 
     # --------------------------
     # CHECKS Cross section
@@ -58,16 +86,19 @@ def main():
     xs = float(xs)
 
     # calculate the nominal weight for all events and check that the sum returns the cross section
-    weights = arr.eventinfo.weight
-    norm_weights = weights * xs * 1000 / ak.sum(weights)
+    weight = arr.eventinfo.weight
+    norm_weight = weight * xs * 1000 / ak.sum(weight)
     print("cross-section (pb):", xs)
-    print("cross-section reconstructed (fb):", ak.sum(norm_weights))
+    print("cross-section reconstructed (fb):", ak.sum(norm_weight))
     print("expected (fb):", xs * 1000)
 
     # --------------------------
     # LHE → ROOT (nanoAOD)
     # --------------------------
-    build_TTree_nanoAOD(arr, ROOT_FILE)
+    if "weights" in ak.fields(arr):
+        build_TTree_nanoAOD_reweighted(arr, ROOT_FILE)
+    else:
+        build_TTree_nanoAOD(arr, ROOT_FILE)
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
