@@ -73,10 +73,6 @@ def main():
     # --------------------------
     # arr is an array where each entry corresponds to an event (each entry will be an array of arrays containing general info about the event, list of particles etc.)
     arr = pylhe.to_awkward(EVENTS)
-    print("arr fields:",ak.fields(arr))
-    print("arr.eventinfo fields:",ak.fields(arr.eventinfo))
-    print("arr.particles fields:",ak.fields(arr.particles))
-    print("arr.eventinfo.weight fields:",(arr.eventinfo.weight))
 
     # --------------------------
     # CHECKS Cross section
