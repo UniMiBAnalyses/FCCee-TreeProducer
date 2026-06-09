@@ -189,8 +189,6 @@ def main():
     # WW: -1 ; WZ:-2 ; ZZ:-3 ; ZZ with Higgs: -4 ; WW with Higgs: -5
     is_ZZ, is_WW, is_ZW, is_HZ, is_HW, is_VBS = classify_events(arr)
 
-    #is_ZZ, is_WW, is_ZW, is_VBS = classify_events(arr)
-    #kind_event = ak.where(~is_VBS, +1, ak.where(is_WW, -1, ak.where(is_ZW, -2, ak.where(is_ZZ, -3, 0))))
     kind_event = ak.where(~is_VBS, ak.where(is_HZ, -4, ak.where(is_HW, -5, +1)), ak.where(is_WW, -1, ak.where(is_ZW, -2, ak.where(is_ZZ, -3, 0))))
 
     # LHE → ROOT (nanoAOD)
