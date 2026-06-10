@@ -99,9 +99,11 @@ def select_events(arr):
 def classify_events(arr):
     part, lep = select_events(arr)
 
+    There_is_higgs = ak.any(abs(part.pdgId) == 25, axis=1)
+
     if len(lep) == 0 or len(part) == 0:
             empty = ak.Array(np.zeros(len(arr), dtype=bool))
-            return empty, empty, empty, empty
+            return empty, empty, empty, empty, There_is_higgs
 
     mother_idx = lep.mother1 - 1
     mother = part[mother_idx]
@@ -160,7 +162,7 @@ def classify_events(arr):
         (is_ZZ | is_ZW | is_WW)
     )
 
-    return is_ZZ, is_WW, is_ZW, is_HZ, is_HW, is_VBS
+    return is_ZZ, is_WW, is_ZW, is_HZ, is_HW, is_VBS, There_is_higgs
 
 
 # -------------------------
@@ -180,16 +182,17 @@ def main():
 
     # calculate the nominal weight for all events and check that the sum returns the cross section
     weight = arr.eventinfo.weight
-    norm_weight = weight * xs * 1000 / ak.sum(weight)
+    norm_weight = weight * xs * 1000
     print("cross-section (pb):", xs)
-    print("cross-section reconstructed (fb):", ak.sum(norm_weight))
+    print("cross-section reconstructed (fb):", ak.sum(norm_weight / ak.sum(weight)))
     print("expected (fb):", xs * 1000)
 
     # CLASSIFY EVENTS: negative: signal; positive: background; 0: something deeply wrong appened (like code that compiles on the first try)
     # WW: -1 ; WZ:-2 ; ZZ:-3 ; ZZ with Higgs: -4 ; WW with Higgs: -5
-    is_ZZ, is_WW, is_ZW, is_HZ, is_HW, is_VBS = classify_events(arr)
+    # Bkg generic: +1, bkg with Higgs: +2
+    is_ZZ, is_WW, is_ZW, is_HZ, is_HW, is_VBS, theres_H = classify_events(arr)
 
-    kind_event = ak.where(~is_VBS, ak.where(is_HZ, -4, ak.where(is_HW, -5, +1)), ak.where(is_WW, -1, ak.where(is_ZW, -2, ak.where(is_ZZ, -3, 0))))
+    kind_event = ak.where(~is_VBS, ak.where(is_HZ, -4, ak.where(is_HW, -5, ak.where(theres_H, +2, +1))), ak.where(is_WW, -1, ak.where(is_ZW, -2, ak.where(is_ZZ, -3, 0))))
 
     # LHE → ROOT (nanoAOD)
     if "weights" in ak.fields(arr):
