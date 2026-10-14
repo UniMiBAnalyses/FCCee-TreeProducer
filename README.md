@@ -14,7 +14,7 @@ On top of that, it classifies each event of a Vector Boson Scattering (VBS) samp
 ## Usage
 Run the script by providing an input LHE file and a name for the output ROOT file:
 ```bash
-python3 lhe_to_root_had.py input.lhe output.root
+python3 lhe2root.py input.lhe output.root
 ```
 
 While running, the script prints a check of the cross section (the sum of the normalised event weights must reproduce the cross section stored in the LHE file) and a summary of the number of events per `kind_event` code.
